@@ -6,7 +6,7 @@ var fs = require('fs')
 
 module.exports = streamify
 
-function streamify (uri, opt) {
+function streamify (uri, opt, ytdlOpts, throughOpts) {
   opt = xtend({
     videoFormat: 'mp4',
     quality: 'lowest',
@@ -14,7 +14,6 @@ function streamify (uri, opt) {
     applyOptions: function () {}
   }, opt)
 
-  var video = ytdl(uri, {filter: filterVideo, quality: opt.quality})
 
   function filterVideo (format) {
     return (
@@ -23,9 +22,14 @@ function streamify (uri, opt) {
     )
   }
 
+  var ytdlOpts = Object.assign({filter: filterVideo, quality: opt.quality}, ytdlOpts || {})
+  
+  var video = ytdl(uri, ytdlOpts)
+
+
   var stream = opt.file
     ? fs.createWriteStream(opt.file)
-    : through()
+    : through(throughOpts || {})
 
   var ffmpeg = new FFmpeg(video)
   opt.applyOptions(ffmpeg)
